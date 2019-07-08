@@ -75,6 +75,11 @@ class IMAPDownloader():
 
     def login_as_user(self, username, password):
 
+        if (username is None or password is None):
+            if self.VERBOSE:
+                print("No credentials!")
+            return 1
+
         self.BASE_FOLDER = username.split('@')[0]
         self.mailboxes = []
 
