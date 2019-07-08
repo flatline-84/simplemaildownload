@@ -84,7 +84,7 @@ class IMAPDownloader():
         try:
             self.connection.login(username, password)
         except Exception as err:
-            print("Logging in error:", err)
+            print("Logging in error: " + bcolors.FAIL, err, bcolors.ENDC)
             return 1
 
         typ, data = self.connection.list()
@@ -195,7 +195,9 @@ class IMAPDownloader():
         for username in self.users:
             self.open_connection()
             self.current_user = username
-            self.login_as_user(self.current_user, self.users[self.current_user])
+            
+            if (self.login_as_user(self.current_user, self.users[self.current_user])):
+                continue
 
             while (len(self.mailboxes) > 0 ):
                 self.download_folder(self.mailboxes.pop())
