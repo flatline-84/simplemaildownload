@@ -7,6 +7,7 @@ import sys
 from pprint import pprint
 import re
 import csv
+import logging
 
 class bcolors:
     HEADER = '\033[95m'
@@ -46,6 +47,15 @@ class IMAPDownloader():
         self.csv_filename           = csv_filename
         self.mailboxes              = []
 
+        logging.basicConfig(level=logging.DEBUG,
+                            format="%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s",
+                            handlers=[
+                                logging.FileHandler('emaildownloader.log'),
+                                logging.StreamHandler(sys.stdout)
+                            ])
+
+        self.logger = logging.getLogger()
+
         self.parse_csv()
 
     def parse_csv(self):
@@ -58,14 +68,14 @@ class IMAPDownloader():
                 #     line_count += 1
                 # print(f'{row["username"]} has password of {row["password"]}')
                 self.users[row["username"]] = row["password"]
-            print(f'There are {len(self.users)} users')
+            self.logger.info(f'There are {len(self.users)} users')
             
 
     def open_connection(self):
         hostname = self.CONFIG.get('server','hostname')
         ssl_port = self.CONFIG.get('server','ssl_port')
         if self.VERBOSE:
-            print("Connecting to <" + hostname + "> on port", ssl_port)
+            self.logger.debug("Connecting to <" + hostname + "> on port " + ssl_port)
 
         # Need to check if timeout
         self.connection = imaplib.IMAP4_SSL(host=hostname, port=ssl_port)
@@ -77,33 +87,34 @@ class IMAPDownloader():
 
         if (username is None or password is None):
             if self.VERBOSE:
-                print("No credentials!")
+                self.logger.warning("No credentials!")
             return 1
 
         self.BASE_FOLDER = username.split('@')[0]
         self.mailboxes = []
 
         if self.VERBOSE:
-            print("Logging in as " + bcolors.WARNING + username + bcolors.ENDC)
+            self.logger.info("Logging in as " + bcolors.WARNING + username + bcolors.ENDC)
 
         try:
             self.connection.login(username, password)
         except Exception as err:
-            print("Logging in error: " + bcolors.FAIL, err, bcolors.ENDC)
+            self.logger.error(bcolors.FAIL + "Authentication failure!" + bcolors.ENDC)
+            self.logger.error("Username: " + username + "\tPassword: " + password)
             return 1
 
         typ, data = self.connection.list()
         if self.VERBOSE:
-            print("Account connection: " + bcolors.OKGREEN + typ + bcolors.ENDC)
+            self.logger.info("Account connection: " + bcolors.OKGREEN + typ + bcolors.ENDC)
             
         if (typ != "OK"):
-            print("Response is NOKAY! Leaving now with error:", typ)
+            self.logger.warning("Response is NOKAY! Leaving now with error:", typ)
             return 1
         
         self.parse_mailbox_names(data)
-        print("Mailboxes:")
+        self.logger.debug("Mailboxes:")
         for mb in self.mailboxes:
-            print("\t" + mb)
+            self.logger.debug("\t" + mb)
         
         return 0
 
@@ -124,12 +135,12 @@ class IMAPDownloader():
         
         if not os.path.exists(newDir):
             if self.VERBOSE:
-                print("Making new directory:", newDir)
+                self.logger.debug("Making new directory: " + newDir)
             os.makedirs(newDir)
         
         # os.chdir(newDir)
 
-        filename = self.BASE_MSG_NAME + name + '.eml'
+        filename = self.BASE_MSG_NAME + name.strip() + '.eml'
 
         # Check if file exists first before saving
         if (os.path.isfile(newDir + '/' + filename)):
@@ -146,11 +157,11 @@ class IMAPDownloader():
 
     def download_folder(self, folder):
         if self.VERBOSE:
-            print('Downloading folder:', folder)
+            self.logger.info('Downloading folder: ' + folder)
 
         # TODO: need error checking
         if (self.connection.state == "NONAUTH"): 
-            print("Not authenticated! Can't download.")
+            self.logger.warning("Not authenticated! Can't download.")
             return
 
         typ, data = self.connection.select(mailbox=folder, readonly=True)
@@ -161,7 +172,7 @@ class IMAPDownloader():
 
         typ, data = self.connection.search(None, 'ALL')
 
-        print("There are {} messages in {}".format(num_msgs, folder))
+        self.logger.info("There are {} messages in {}".format(num_msgs, folder))
         if (num_msgs == 0):
             return 0
 
@@ -178,7 +189,7 @@ class IMAPDownloader():
             print("Writing: {} / {}".format(num.decode(), num_msgs))
             if (int(num.decode()) < num_msgs):
                 self.delete_last_lines()
-        print("Downloaded {} messages from {} successfully!".format(num_msgs, folder))
+        self.logger.info("Downloaded {} messages from {} successfully!".format(num_msgs, folder))
         self.connection.close()
         return
 
@@ -189,11 +200,11 @@ class IMAPDownloader():
 
     def logout(self):
         if (self.connection.state == "NONAUTH"): 
-            print("Not authenticated! Can't logout.")
+            self.logger.warning("Not authenticated! Can't logout.")
             return
         self.connection.logout()
     def print_block(self):
-        print("\n==============================================\n")
+        ("\n==============================================\n")
 
     def run(self):
 

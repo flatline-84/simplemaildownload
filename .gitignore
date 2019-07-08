@@ -3,3 +3,5 @@ email.conf
 emails/
 .vscode/
 __pycache__/
+*.log
+*.csv
