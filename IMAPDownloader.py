@@ -8,6 +8,7 @@ from pprint import pprint
 import re
 import csv
 import logging
+import urllib.parse
 
 class bcolors:
     HEADER = '\033[95m'
@@ -139,8 +140,11 @@ class IMAPDownloader():
             os.makedirs(newDir)
         
         # os.chdir(newDir)
+        # Clean up name
+        name = name.strip()
+        name = urllib.parse.quote(name, safe='')
 
-        filename = self.BASE_MSG_NAME + name.strip().strip('/') + '.eml'
+        filename = self.BASE_MSG_NAME + name + '.eml'
 
         # Check if file exists first before saving
         if (os.path.isfile(newDir + '/' + filename)):
