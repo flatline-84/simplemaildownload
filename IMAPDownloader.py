@@ -140,7 +140,7 @@ class IMAPDownloader():
         
         # os.chdir(newDir)
 
-        filename = self.BASE_MSG_NAME + name.strip() + '.eml'
+        filename = self.BASE_MSG_NAME + name.strip().strip('/') + '.eml'
 
         # Check if file exists first before saving
         if (os.path.isfile(newDir + '/' + filename)):
