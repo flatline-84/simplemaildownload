@@ -1,0 +1,5 @@
+users.csv
+email.conf
+emails/
+.vscode/
+__pycache__/

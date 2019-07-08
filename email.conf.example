@@ -1,0 +1,8 @@
+[files]
+base_directory = emails/
+base_filename = msg_
+
+[server]
+hostname = imap.example.com
+port = 143
+ssl_port = 993
