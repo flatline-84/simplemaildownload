@@ -68,7 +68,7 @@ class IMAPDownloader():
                 #     line_count += 1
                 # print(f'{row["username"]} has password of {row["password"]}')
                 self.users[row["username"]] = row["password"]
-            self.logger.info(f'There are {len(self.users)} users')
+            self.logger.info("There are " + str(len(self.users)) + " users")
             
 
     def open_connection(self):
