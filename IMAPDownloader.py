@@ -22,7 +22,7 @@ class bcolors:
 
 class IMAPDownloader():
 
-    def __init__(self, csv_filename):
+    def __init__(self):
 
         self.list_response_pattern = re.compile(
             r'\((?P<flags>.*?)\) "(?P<delimiter>.*)" (?P<name>.*)'
@@ -45,7 +45,7 @@ class IMAPDownloader():
         # Which user is currently downloading
         self.current_user           = None
         self.users                  = {}
-        self.csv_filename           = csv_filename
+        self.csv_filename           = ""
         self.mailboxes              = []
 
         logging.basicConfig(level=logging.DEBUG,
@@ -57,6 +57,9 @@ class IMAPDownloader():
 
         self.logger = logging.getLogger()
 
+        
+    def set_csv(self, csv_filename):
+        self.csv_filename = csv_filename
         self.parse_csv()
 
     def parse_csv(self):
@@ -68,7 +71,9 @@ class IMAPDownloader():
                 #     print(f'Column names are {", ".join(row)}')
                 #     line_count += 1
                 # print(f'{row["username"]} has password of {row["password"]}')
-                self.users[row["username"]] = row["password"]
+                # self.users[row["username"]] = row["password"]
+                add_user(row["username"], row["password"])
+
             self.logger.info("There are " + str(len(self.users)) + " users")
             
 
@@ -83,6 +88,9 @@ class IMAPDownloader():
 
         return 0
         #return connection
+
+    def add_user (self, username, password):
+        self.users[username] = password
 
     def login_as_user(self, username, password):
 
